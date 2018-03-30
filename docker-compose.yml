@@ -1,27 +1,45 @@
 version: '3'
-
 services:
   master:
     build: .
+    container_name: master
     command:
       - roscore
+    environment:
+      - "ROS_IP=172.19.0.100"
+    networks:
+      rosnet:
+        ipv4_address: 172.19.0.100
+    ports:
+      - "11311:11311"
+      - "33690:33690"
 
   talker:
     build: .
+    container_name: talker
     environment:
-      - "ROS_HOSTNAME=talker"
-      - "ROS_MASTER_URI=http://master:11311"
-    depends_on:
-      - master
-    command:
-      - rosrun roscpp_tutorials talker
+      - "ROS_IP=172.19.0.101"
+      - "ROS_MASTER_URI=http://172.19.0.100:11311"
+    command: rosrun roscpp_tutorials talker
+    networks:
+      rosnet:
+        ipv4_address: 172.19.0.101
 
   listener:
     build: .
+    container_name: listener
     environment:
-      - "ROS_HOSTNAME=listener"
-      - "ROS_MASTER_URI=http://master:11311"
-    depends_on:
-      - master
-    command:
-      - rosrun roscpp_tutorials listener
+      - "ROS_IP=172.19.0.102"
+      - "ROS_MASTER_URI=http://172.19.0.100:11311"
+    command: rosrun roscpp_tutorials listener
+    networks:
+      rosnet:
+        ipv4_address: 172.19.0.102
+
+networks:
+  rosnet:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+      - subnet: 172.19.0.0/24
